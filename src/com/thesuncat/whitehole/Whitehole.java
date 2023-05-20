@@ -15,13 +15,17 @@
 
 package com.thesuncat.whitehole;
 
-import club.minnced.discord.rpc.*;
-import com.thesuncat.whitehole.rendering.cache.*;
+import com.thesuncat.whitehole.rendering.cache.RendererCache;
+import com.thesuncat.whitehole.rendering.cache.ShaderCache;
+import com.thesuncat.whitehole.rendering.cache.TextureCache;
 import com.thesuncat.whitehole.smg.BcsvFile;
 import com.thesuncat.whitehole.smg.GameArchive;
-import com.thesuncat.whitehole.swing.*;
-import java.awt.Image;
-import java.awt.Toolkit;
+import com.thesuncat.whitehole.swing.MainFrame;
+import com.thesuncat.whitehole.swing.RarcEditorForm;
+import com.thesuncat.whitehole.swing.SettingsForm;
+
+import javax.swing.*;
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -29,7 +33,6 @@ import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
-import javax.swing.*;
 
 public class Whitehole {
     public static final String NAME = "Whitehole v1.7";
@@ -90,41 +93,6 @@ public class Whitehole {
         ShaderCache.init();
         RendererCache.init();
         BcsvFile.populateHashTable();
-
-        if(Settings.richPresence) {
-            Thread discord = new Thread(() -> {
-                final DiscordRPC lib = DiscordRPC.INSTANCE;
-                String applicationId = "523605143480958998";
-                DiscordEventHandlers handlers = new DiscordEventHandlers();
-                lib.Discord_Initialize(applicationId, handlers, true, "");
-                final DiscordRichPresence presence = new DiscordRichPresence();
-                presence.startTimestamp = System.currentTimeMillis() / 1000;
-                presence.details = "Working on a mod";
-                presence.largeImageKey = "icon";
-                presence.state = "Idle";
-                presence.largeImageText = "Super Mario Galaxy 1 & 2 Level Editor";
-                lib.Discord_UpdatePresence(presence);
-                
-                while (!Thread.currentThread().isInterrupted()) {
-                    if(GalaxyEditorForm.closing || GalaxyEditorForm.lastMove >= 60)
-                        currentTask = "Idle";
-                    GalaxyEditorForm.closing = false;
-                    
-                    lib.Discord_RunCallbacks();
-                    presence.state = currentTask;
-                    lib.Discord_UpdatePresence(presence);
-                    
-                    if(closing)
-                        return;
-                    
-                    // Slow thread down
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException ignore) {}
-                }
-            }, "RichPresence");
-            discord.start();
-        }
         
         new MainFrame().setVisible(true);
     }
